@@ -46,3 +46,13 @@ async function uploadFolder() {
     }
 }
 
+async function stopUpload() {
+    try {
+        const response = await fetch('/ftp/stop_upload', { method: 'POST' });
+        const result = await response.json();
+        document.getElementById('stop-upload-status').innerText = result.message;
+    } catch (error) {
+        document.getElementById('stop-upload-status').innerText = `Error: ${error.message}`;
+    }
+}
+
