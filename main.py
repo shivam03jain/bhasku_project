@@ -10,7 +10,6 @@ import logging
 import os
 import asyncio
 from logging_config import setup_logging
-from aioftp.errors import AioftpError, LoginError, ConnectionError, DirectoryError
 
 app = FastAPI()
 
@@ -102,6 +101,8 @@ async def check_connection():
 async def upload_files_to_ftp():
     global upload_task, stop_flag
 
+    stop_flag = False
+
     local_folder = upload_folder  # Update this to your folder path
 
     if not ftp_credentials:
@@ -158,7 +159,7 @@ async def upload_directory_recursive(client, local_dir, remote_dir):
             await client.upload(local_path,remote_dir)
 
 
-@app.post("ftp//stop-upload")
+@app.post("/ftp/stop_upload")
 async def stop_upload():
     global stop_flag, upload_task
 
