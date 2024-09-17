@@ -45,3 +45,4 @@ async function uploadFolder() {
         document.getElementById('upload-folder-status').innerText = `Error: ${error.message}`;
     }
 }
+

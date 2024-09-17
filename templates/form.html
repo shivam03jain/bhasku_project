@@ -8,45 +8,35 @@
     <script src="/static/scripts.js" defer></script>
 </head>
 <body>
-    <h1>FTP Server Configuration</h1>
+    <h1>FTP Manager</h1>
 
-    <!-- Form to input FTP credentials and the remote path -->
-    <form action="/ftp/upload_credentials" method="post">
+    <!-- Form to upload FTP credentials -->
+    <form id="ftp-credentials-form" onsubmit="submitForm(event, '/ftp/upload_credentials', new FormData(this), 'form-response')">
         <label for="host">Host:</label>
-        <input type="text" id="host" name="host" required><br><br>
-
+        <input type="text" id="host" name="host" required><br>
         <label for="port">Port:</label>
-        <input type="number" id="port" name="port" required><br><br>
-
+        <input type="number" id="port" name="port" required><br>
         <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required><br><br>
-
+        <input type="text" id="username" name="username" required><br>
         <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required><br><br>
-
+        <input type="password" id="password" name="password" required><br>
         <label for="remotepath">Remote Path:</label>
-        <input type="text" id="remotepath" name="remotepath" required><br><br>
-
-        <button type="submit">Upload FTP Credentials</button>
+        <input type="text" id="remotepath" name="remotepath" required><br>
+        <button type="submit">Upload Credentials</button>
     </form>
+    <p id="form-response"></p>
 
-    <!-- Button to fetch current FTP credentials -->
-    <h2>Fetch Current FTP Credentials</h2>
-    <form action="/ftp/get_credentials" method="get">
-        <button type="submit">Fetch FTP Credentials</button>
-    </form>
+    <!-- Button to fetch FTP credentials -->
+    <button onclick="fetchCredentials()">Fetch FTP Credentials</button>
+    <pre id="credentials"></pre>
 
-    <!-- Button to check connection to ftp server-->
-    <h2>Check Connection</h2>
-    <form action="/ftp/check_connection"  method="get" enctype="multipart/form-data">
-        <button type="submit">Check Connection with Server</button>
-    </form>
+    <!-- Button to check FTP connection -->
+    <button onclick="checkConnection()">Check Connection</button>
+    <p id="connection-status"></p>
 
-    <!-- Button to upload a file to the FTP server -->
-    <h2>Upload File to FTP Server</h2>
-    <form action="/ftp/upload_folder"  method="post" enctype="multipart/form-data">
-        <button type="submit">Upload Files to FTP Server</button>
-    </form>
+    <!-- Button to upload files from the folder -->
+    <button onclick="uploadFolder()">Upload All Files from Folder</button>
+    <p id="upload-folder-status"></p>
 </body>
 </html>
 

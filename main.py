@@ -1,5 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from io import BytesIO
@@ -14,6 +15,9 @@ app = FastAPI()
 # In-memory storage for FTP credentials
 ftp_credentials = {}
 upload_folder = ""
+
+# Serve static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Configure logging
 # Set up logging
@@ -86,36 +90,46 @@ async def check_connection():
 
 # Route to upload a file to the FTP server
 @app.post("/ftp/upload_folder")
-async def upload_folder_to_ftp():
+async def upload_folder():
+    local_folder = upload_folder  # Update this to your folder path
     if not ftp_credentials:
-        raise HTTPException(status_code=400, detail="FTP credentials not set")
+        raise HTTPException(status_code=400, detail="FTP credentials not provided")
     if not upload_folder:
-        raise HTTPException(status_code=400, detail="Folder path not set")
+        raise HTTPException(status_code=400,detail="Folder Path not provided")
 
     try:
-        # Connect to the FTP server using aioftp
         async with aioftp.Client.context(
             ftp_credentials['host'],
             port=ftp_credentials['port'],
             user=ftp_credentials['username'],
             password=ftp_credentials['password']
         ) as client:
-            for filename in os.listdir(upload_folder):
-                local_path = os.path.join(upload_folder, filename)
-                if os.path.isfile(local_path):
-                    remote_path = ftp_credentials['remotepath']
-                    with open(local_path, "rb") as file:
-                        file_data = file.read()
-                        logger.info(f"Uploading file: {filename} to {remote_path}")
-                        await client.upload(local_path, remote_path)
-
+            await upload_directory_recursive(client, upload_folder, ftp_credentials['remotepath'])
         return {"message": "All files from folder uploaded successfully"}
-
     except Exception as e:
-        # Log the error
-        logger.error(f"Error uploading files from folder: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Upload error: {e}")
+        return {"message": f"Upload failed: {e}"}
 
+async def upload_directory_recursive(client, local_dir, remote_dir):
+    # Ensure remote directory exists
+    async with client.change_directory(remote_dir):
+        for entry in os.listdir(local_dir):
+            local_path = os.path.join(local_dir, entry)
+            if os.path.isdir(local_path):
+                # Recursively upload subdirectories
+                remote_subdir = os.path.join(remote_dir, entry).replace(os.path.sep, '/')
+                try:
+                    async with client.make_directory(remote_subdir):
+                        await upload_directory_recursive(client, local_path, remote_subdir)
+                except Exception as e:
+                    logger.error(f"Failed to create remote directory {remote_subdir}: {e}")
+            elif os.path.isfile(local_path):
+                # Upload files
+                remote_file_path = os.path.join(remote_dir, entry).replace(os.path.sep, '/')
+                with open(local_path, "rb") as file:
+                    file_data = file.read()
+                    logger.info(f"Uploading file: {entry} to {remote_file_path}")
+                    await client.upload(local_path,remote_file_path)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
