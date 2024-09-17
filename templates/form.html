@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FTP Server Form</title>
+</head>
+<body>
+    <h1>FTP Server Configuration</h1>
+
+    <!-- Form to input FTP credentials and the remote path -->
+    <form action="/ftp/upload_credentials" method="post">
+        <label for="host">Host:</label>
+        <input type="text" id="host" name="host" required><br><br>
+
+        <label for="port">Port:</label>
+        <input type="number" id="port" name="port" required><br><br>
+
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required><br><br>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required><br><br>
+
+        <label for="remotepath">Remote Path:</label>
+        <input type="text" id="remotepath" name="remotepath" required><br><br>
+
+        <button type="submit">Upload FTP Credentials</button>
+    </form>
+
+    <!-- Button to fetch current FTP credentials -->
+    <h2>Fetch Current FTP Credentials</h2>
+    <form action="/ftp/get_credentials" method="get">
+        <button type="submit">Fetch FTP Credentials</button>
+    </form>
+
+    <!-- Button to upload a file to the FTP server -->
+    <h2>Upload File to FTP Server</h2>
+    <form action="/ftp/upload_folder"  method="post" enctype="multipart/form-data">
+        <button type="submit">Upload Files to FTP Server</button>
+    </form>
+</body>
+</html>
+
