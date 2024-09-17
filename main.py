@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
+from io import BytesIO
 import aioftp
 import uvicorn
 import logging
@@ -60,6 +61,28 @@ async def get_ftp_credentials():
         raise HTTPException(status_code=404, detail="FTP credentials not found")
     return ftp_credentials
 
+# Route to check the connection to the FTP server
+@app.get("/ftp/check_connection")
+async def check_connection():
+    if not ftp_credentials:
+        raise HTTPException(status_code=400, detail="FTP credentials not set")
+    
+    try:
+        # Test connection to the FTP server
+        async with aioftp.Client.context(
+            ftp_credentials['host'],
+            port=ftp_credentials['port'],
+            user=ftp_credentials['username'],
+            password=ftp_credentials['password']
+        ) as client:
+            # Connection is successful if no exception is raised
+            return {"message": "Connection to FTP server successful"}
+    
+    except Exception as e:
+        # Log the error
+        logger.error(f"Error connecting to FTP server: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to connect to FTP server")
+
 
 # Route to upload a file to the FTP server
 @app.post("/ftp/upload_folder")
@@ -80,11 +103,11 @@ async def upload_folder_to_ftp():
             for filename in os.listdir(upload_folder):
                 local_path = os.path.join(upload_folder, filename)
                 if os.path.isfile(local_path):
-                    remote_path = ftp_credentials['remotepath'] + '/' + filename
+                    remote_path = ftp_credentials['remotepath']
                     with open(local_path, "rb") as file:
                         file_data = file.read()
                         logger.info(f"Uploading file: {filename} to {remote_path}")
-                        await client.upload_stream(aioftp.StreamIO(file_data), remote_path)
+                        await client.upload(local_path, remote_path)
 
         return {"message": "All files from folder uploaded successfully"}
 
@@ -94,7 +117,7 @@ async def upload_folder_to_ftp():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-if __name__ == "_main_":
+if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 # Run the FastAPI server (use the command below)
 # uvicorn main:app --reload
